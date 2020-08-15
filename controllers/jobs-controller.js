@@ -47,6 +47,26 @@ const addNewJob = async (req, res, next) => {
   res.json(newjob);
 };
 
+const deleteJob = async (req, res, next) => {
+  let jobID = req.params.id;
+  let job;
+
+  try {
+    job = await Job.findById(jobID);
+  } catch (err) {
+    return next(new HttpError("could not find the place.", 404));
+  }
+
+  try {
+    job.remove();
+  } catch (err) {
+    return next(new HttpError("could not delete palce.", 500));
+  }
+
+  res.json({ message: "job deleted." });
+};
+
 exports.addNewJob = addNewJob;
 exports.getAllJobs = getAllJobs;
 exports.getJobById = getJobById;
+exports.deleteJob = deleteJob;
