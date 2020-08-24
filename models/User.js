@@ -8,8 +8,8 @@ const User = new mongoose.Schema({
   password: { type: String, minlength: 6, required: true },
   birth: { type: String, required: true },
   phone: { type: String, required: true, unique: true },
-  ownJobs: { type: String },
-  wantedJobs: { type: String },
+  ownJobs: [{ type: mongoose.Types.ObjectId, required: true, ref: "Jobs" }],
+  wantedJobs: [{ type: mongoose.Types.ObjectId, required: true, ref: "Jobs" }],
 });
 
 User.plugin(uniqueValidator);

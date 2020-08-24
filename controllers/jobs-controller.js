@@ -1,5 +1,7 @@
 const Job = require("../models/Job");
+const User = require("../models/User");
 const HttpError = require("../models/HttpError");
+const mongoose = require("mongoose");
 
 const getAllJobs = async (req, res, next) => {
   let alljobs;
@@ -13,7 +15,7 @@ const getAllJobs = async (req, res, next) => {
 };
 
 const getJobById = async (req, res, next) => {
-  jobID = req.params.id;
+  const jobID = req.params.id;
   let job;
   try {
     job = await Job.findById(jobID);
@@ -30,6 +32,17 @@ const addNewJob = async (req, res, next) => {
   if (!description || !date || !location || !payment || !ownerId) {
     return next(new HttpError("one or more details are missing.", 400));
   }
+  // chceks if user exsits
+  let user;
+  try {
+    user = await User.findById(ownerId);
+  } catch (err) {
+    return next(new HttpError("cannot create a job.", 500));
+  }
+  if (!user) {
+    return next(new HttpError("cannot find current user.", 404));
+  }
+
   const job = new Job({
     description,
     date,
@@ -37,10 +50,16 @@ const addNewJob = async (req, res, next) => {
     payment,
     ownerId,
   });
-  let newjob;
 
+  // Job creation - with session
+  let newjob;
   try {
-    newjob = await job.save();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    newjob = await job.save({ session: sess });
+    user.ownJobs.push(job);
+    await user.save({ session: sess });
+    sess.commitTransaction();
   } catch (err) {
     return next(new HttpError("cannot create a job.", 500));
   }
@@ -48,7 +67,7 @@ const addNewJob = async (req, res, next) => {
 };
 
 const deleteJob = async (req, res, next) => {
-  let jobID = req.params.id;
+  const jobID = req.params.id;
   let job;
 
   try {

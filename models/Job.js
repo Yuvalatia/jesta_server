@@ -5,7 +5,7 @@ const JobSchema = mongoose.Schema({
   date: { type: String, required: true },
   location: { type: String, required: true },
   payment: { type: Number, required: true },
-  ownerId: { type: String, required: true },
+  ownerId: { type: mongoose.Types.ObjectId, required: true, ref: "Users" },
 });
 
 module.exports = mongoose.model("Jobs", JobSchema);
