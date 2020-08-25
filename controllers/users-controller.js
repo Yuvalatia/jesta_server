@@ -1,8 +1,9 @@
 const User = require("../models/User");
 const HttpError = require("../models/HttpError");
+const { hash, compare } = require("bcrypt");
 
 const userRegister = async (req, res, next) => {
-  const { fullname, image, email, password, birth, phone } = req.body;
+  let { fullname, image, email, password, birth, phone } = req.body;
 
   // validation
   let validUser;
@@ -11,20 +12,29 @@ const userRegister = async (req, res, next) => {
       $or: [{ email: email }, { phone: phone }],
     });
   } catch (err) {
-    return next(new HttpError("cannot register.", 500));
+    return next(new HttpError(err.message, 500));
   }
 
+  // user already exsits
   if (validUser) {
     return next(
       new HttpError("email or phone are already in the system.", 404)
     );
   }
 
+  // hash password
+  let hashPassword;
+  try {
+    hashPassword = await hash(password, 10);
+  } catch (err) {
+    return next(new HttpError("error made.[ph]", 500));
+  }
+  // create new user
   let user = new User({
     fullname,
     image,
     email,
-    password,
+    password: hashPassword,
     birth,
     phone,
     ownJobs: [],
@@ -35,7 +45,7 @@ const userRegister = async (req, res, next) => {
   try {
     newUser = await user.save();
   } catch (err) {
-    return next(new HttpError("cannot register.", 500));
+    return next(new HttpError(err.message, 500));
   }
 
   res.json(newUser.toObject({ getters: true }));
