@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const HttpError = require("../models/HttpError");
 const { hash, compare } = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const userRegister = async (req, res, next) => {
   let { fullname, image, email, password, birth, phone } = req.body;
@@ -60,11 +61,31 @@ const userLogin = async (req, res, next) => {
     return next(new HttpError("cannot login.", 500));
   }
 
-  if (!user || user.password !== password) {
-    return next(new HttpError("email or password are incorrect.", 400));
+  if (!user) {
+    return next(new HttpError("email or password are wrong.", 404));
   }
 
-  res.json({ message: "Login fine!" });
+  // password unhash
+  let isTruePassword;
+  try {
+    isTruePassword = await hash(password, user.password);
+  } catch (err) {
+    return next(new HttpError(err.message, 500));
+  }
+  if (!isTruePassword) {
+    return next(new HttpError("email or password are wrong.", 404));
+  }
+
+  // token creation
+  let token;
+  try {
+    token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+  } catch (err) {
+    return next(new HttpError("cannot login.", 500));
+  }
+  res.json({ email: user.email, token: token });
 };
 
 exports.userRegister = userRegister;
