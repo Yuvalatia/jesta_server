@@ -27,7 +27,8 @@ const getJobById = async (req, res, next) => {
 };
 
 const addNewJob = async (req, res, next) => {
-  const { description, date, location, payment, ownerId } = req.body;
+  const ownerId = req.userData.id;
+  const { description, date, location, payment } = req.body;
   // checks valid props
   if (!description || !date || !location || !payment || !ownerId) {
     return next(new HttpError("one or more details are missing.", 400));
@@ -67,17 +68,33 @@ const addNewJob = async (req, res, next) => {
 };
 
 const deleteJob = async (req, res, next) => {
-  const jobID = req.params.id;
-  let job;
+  const ownerId = req.userData.id;
+  const jobID = req.body.id;
 
+  let job;
   try {
-    job = await Job.findById(jobID);
+    job = await Job.findById(jobID).populate("ownerId");
   } catch (err) {
-    return next(new HttpError("could not find the place.", 404));
+    return next(new HttpError("could not delete palce.", 404));
+  }
+
+  //checks if there is a job
+  if (!job) {
+    return next(new HttpError("job not found.", 404));
+  }
+
+  // validate that the job is from this user
+  if (job.ownerId._id.toString() !== ownerId) {
+    return next(new HttpError("You dont have a premission to delete.", 400));
   }
 
   try {
-    job.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await job.remove({ session: sess });
+    job.ownerId.ownJobs.pull(job);
+    await job.ownerId.save({ session: sess });
+    sess.commitTransaction();
   } catch (err) {
     return next(new HttpError("could not delete palce.", 500));
   }

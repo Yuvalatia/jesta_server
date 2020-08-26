@@ -6,6 +6,9 @@ const JobSchema = mongoose.Schema({
   location: { type: String, required: true },
   payment: { type: Number, required: true },
   ownerId: { type: mongoose.Types.ObjectId, required: true, ref: "Users" },
+  intrestedUsers: [
+    { type: mongoose.Types.ObjectId, required: true, ref: "Users" },
+  ],
 });
 
 module.exports = mongoose.model("Jobs", JobSchema);
