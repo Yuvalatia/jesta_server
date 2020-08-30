@@ -158,7 +158,7 @@ const assignToAJob = async (req, res, next) => {
   } catch (err) {
     return next(new HttpError("cannot assign to a job.", 500));
   }
-  if (alreadyAssign || empty) {
+  if (alreadyAssign && empty) {
     return next(new HttpError("user already assign to this job.", 400));
   }
   // set job intrestedUser & user wantedJobs

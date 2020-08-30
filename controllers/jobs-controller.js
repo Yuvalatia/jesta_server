@@ -102,7 +102,33 @@ const deleteJob = async (req, res, next) => {
   res.json({ message: "job deleted." });
 };
 
+const getJobWatedUsers = async (req, res, next) => {
+  const ownerId = req.userData.id;
+  const jobID = req.body.id;
+
+  // job exsists
+  let job;
+  try {
+    job = await Job.findById(jobID).populate(
+      "intrestedUsers",
+      "-password -ownJobs -wantedJobs"
+    );
+  } catch (err) {
+    return next(new HttpError("cannot get job wanted users.", 500));
+  }
+  if (!job) {
+    return next(new HttpError("job dosent found.", 404));
+  }
+  // job owner is this id
+  if (job.ownerId.toString() !== ownerId) {
+    return next(new HttpError("cannot get job wanted users.", 400));
+  }
+  // return usersWanted this job - no password
+  res.json({ intrestedUsers: job.intrestedUsers });
+};
+
 exports.addNewJob = addNewJob;
 exports.getAllJobs = getAllJobs;
 exports.getJobById = getJobById;
 exports.deleteJob = deleteJob;
+exports.getJobWatedUsers = getJobWatedUsers;
