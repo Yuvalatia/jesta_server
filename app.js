@@ -8,6 +8,17 @@ const app = express();
 // Body Parser
 app.use(express.json());
 
+// Settings
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // open to any domain
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+  next();
+});
+
 // Routes
 app.use("/jobs", jobsRoute);
 app.use("/users", usersRoute);
