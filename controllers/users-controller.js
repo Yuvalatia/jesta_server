@@ -102,6 +102,24 @@ const getAllUserJobs = async (req, res, next) => {
   res.json({ ownJobs: user.ownJobs });
 };
 
+const getAllUserWantedJobs = async (req, res, next) => {
+  const userId = req.userData.id;
+
+  // if users exsits
+  let user;
+  try {
+    user = await User.findById(userId).populate(
+      "wantedJobs",
+      "-intrestedUsers"
+    );
+  } catch (err) {
+    return next(new HttpError("user not found.", 404));
+  }
+
+  res.json({ wantedJobs: user.wantedJobs });
+};
+
 exports.userRegister = userRegister;
 exports.userLogin = userLogin;
 exports.getAllUserJobs = getAllUserJobs;
+exports.getAllUserWantedJobs = getAllUserWantedJobs;

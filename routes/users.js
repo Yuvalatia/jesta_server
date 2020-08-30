@@ -7,4 +7,9 @@ const tokenValidation = require("../auth/auth-check");
 router.post("/register", usersController.userRegister);
 router.post("/login", usersController.userLogin);
 router.post("/ownJobs", tokenValidation, usersController.getAllUserJobs);
+router.post(
+  "/wantedJobs",
+  tokenValidation,
+  usersController.getAllUserWantedJobs
+);
 module.exports = router;
