@@ -1,7 +1,9 @@
 const User = require("../models/User");
 const HttpError = require("../models/HttpError");
-const { hash, compare } = require("bcrypt");
+const { hash } = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Job = require("../models/Job");
+const mongoose = require("mongoose");
 
 const userRegister = async (req, res, next) => {
   let { fullname, image, email, password, birth, phone } = req.body;
@@ -94,7 +96,10 @@ const getAllUserJobs = async (req, res, next) => {
   // if users exsits
   let user;
   try {
-    user = await User.findById(userId).populate("ownJobs", "-ownerId");
+    user = await User.findById(userId).populate(
+      "ownJobs",
+      "-ownerId -intrestedUsers"
+    );
   } catch (err) {
     return next(new HttpError("user not found.", 404));
   }
@@ -119,7 +124,61 @@ const getAllUserWantedJobs = async (req, res, next) => {
   res.json({ wantedJobs: user.wantedJobs });
 };
 
+const assignToAJob = async (req, res, next) => {
+  const userId = req.userData.id;
+  const jobId = req.body.jobId;
+
+  // users exsits
+  let user;
+  try {
+    user = await User.findById(userId, "_id image fullname phone wantedJobs");
+  } catch (err) {
+    return next(new HttpError("cannot find a user.", 404));
+  }
+  // job exsits
+  let job;
+  try {
+    job = await Job.findById(jobId);
+  } catch (err) {
+    return next(new HttpError("cannot find a job.", 404));
+  }
+
+  // checks if job is not owned by same user
+  if (job.ownerId.toString() === user._id.toString()) {
+    return next(new HttpError("user cannot assign to jobs he owned.", 400));
+  }
+  // check if user already assign to this job
+  let alreadyAssign;
+  let empty = false;
+  try {
+    alreadyAssign = await job.intrestedUsers.some((someuser) => {
+      empty = true;
+      return someuser._id.toString() === user._id.toString();
+    });
+  } catch (err) {
+    return next(new HttpError("cannot assign to a job.", 500));
+  }
+  if (alreadyAssign || empty) {
+    return next(new HttpError("user already assign to this job.", 400));
+  }
+  // set job intrestedUser & user wantedJobs
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await job.intrestedUsers.push(user);
+    await user.wantedJobs.push(job);
+    await job.save({ session: sess });
+    await user.save({ session: sess });
+    sess.commitTransaction();
+  } catch (err) {
+    return next(new HttpError("could not assign.", 500));
+  }
+
+  res.json({ message: "great job" });
+};
+
 exports.userRegister = userRegister;
 exports.userLogin = userLogin;
 exports.getAllUserJobs = getAllUserJobs;
 exports.getAllUserWantedJobs = getAllUserWantedJobs;
+exports.assignToAJob = assignToAJob;

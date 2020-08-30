@@ -12,4 +12,5 @@ router.post(
   tokenValidation,
   usersController.getAllUserWantedJobs
 );
+router.post("/assginToJob", tokenValidation, usersController.assignToAJob);
 module.exports = router;
