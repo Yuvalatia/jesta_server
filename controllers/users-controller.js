@@ -51,7 +51,7 @@ const userRegister = async (req, res, next) => {
     return next(new HttpError(err.message, 500));
   }
 
-  res.json(newUser.toObject({ getters: true }));
+  res.json({ message: "User Created!" });
 };
 const userLogin = async (req, res, next) => {
   const { email, password } = req.body;
