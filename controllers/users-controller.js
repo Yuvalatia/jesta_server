@@ -90,6 +90,23 @@ const userLogin = async (req, res, next) => {
   res.json({ email: user.email, token: token });
 };
 
+const getUserDetailsByToken = async (req, res, next) => {
+  const userId = req.userData.id;
+
+  let user;
+  try {
+    user = await User.findById(userId, "_id fullname image email birth phone");
+  } catch (err) {
+    return next(new HttpError("Problem heppend", 500));
+  }
+
+  if (!user) {
+    return next(new HttpError("No user found.", 404));
+  }
+
+  res.json({ user });
+};
+
 const getAllUserJobs = async (req, res, next) => {
   const userId = req.userData.id;
 
@@ -182,3 +199,4 @@ exports.userLogin = userLogin;
 exports.getAllUserJobs = getAllUserJobs;
 exports.getAllUserWantedJobs = getAllUserWantedJobs;
 exports.assignToAJob = assignToAJob;
+exports.getUserDetailsByToken = getUserDetailsByToken;
