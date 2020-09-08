@@ -188,7 +188,7 @@ const assignToAJob = async (req, res, next) => {
     await user.save({ session: sess });
     sess.commitTransaction();
   } catch (err) {
-    return next(new HttpError("could not assign.", 500));
+    return next(new HttpError(err.message, 500));
   }
 
   res.json({ message: "great job" });
