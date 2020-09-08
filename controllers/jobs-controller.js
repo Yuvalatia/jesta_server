@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const getAllJobs = async (req, res, next) => {
   let alljobs;
   try {
-    alljobs = await Job.find();
+    alljobs = await Job.find().sort("-_id");
   } catch {
     return next(new HttpError("cannot pull jobs from server.", 500));
   }
